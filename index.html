@@ -77,13 +77,13 @@
       }
 
       async function loadState() {
-        const res = await fetch('/api/state.ashx');
+        const res = await fetch('/state.aspx');
         currentState = await res.json();
         render();
       }
 
       async function saveState(nextState) {
-        const res = await fetch('/api/state.ashx', {
+        const res = await fetch('/state.aspx', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(nextState)
