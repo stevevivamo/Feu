@@ -8,20 +8,28 @@
       :root { font-family: "Segoe UI", Arial, sans-serif; }
       body {
         margin: 0;
-        min-height: 100vh;
+        height: 100vh;
+        overflow: hidden;
         display: grid;
         place-items: center;
         background: radial-gradient(circle at top, #f8fafc 0%, #e9edf3 55%, #d9dee8 100%);
       }
       .wrapper {
         width: min(95vw, 760px);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         text-align: center;
-        padding: clamp(10px, 2.5vw, 22px);
+        padding: clamp(8px, 2vh, 18px);
+        box-sizing: border-box;
+        gap: clamp(8px, 1.8vh, 16px);
       }
 
       .light-wrap {
-        width: clamp(170px, 52vw, 360px);
-        margin: 0 auto clamp(14px, 2.8vw, 20px);
+        width: min(46vw, 34vh, 320px);
+        min-width: 130px;
+        margin: 0 auto;
       }
       .traffic-svg {
         width: 100%;
@@ -29,13 +37,14 @@
         display: block;
         filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.22));
       }
-      .bulb {
+      .light-node {
         cursor: pointer;
         opacity: .32;
-        transition: opacity .2s ease, transform .16s ease;
+        transform-origin: center;
+        transition: opacity .2s ease, transform .14s ease;
       }
-      .bulb:hover { transform: scale(1.03); }
-      .bulb.on { opacity: 1; }
+      .light-node:hover { transform: scale(1.015); }
+      .light-node.on { opacity: 1; }
 
       .message-box {
         width: min(92vw, 620px);
@@ -89,16 +98,16 @@
           <rect x="35" y="18" width="150" height="470" rx="28" fill="url(#caseGrad)"/>
           <rect x="43" y="26" width="134" height="454" rx="22" fill="#20252e"/>
 
-          <g>
-            <circle class="bulb red" data-color="red" cx="110" cy="110" r="45" fill="#ff4d4d" />
+          <g class="light-node red" data-color="red">
+            <circle cx="110" cy="110" r="45" fill="#ff4d4d" />
             <circle cx="98" cy="98" r="20" fill="url(#gloss)" />
           </g>
-          <g>
-            <circle class="bulb yellow" data-color="yellow" cx="110" cy="254" r="45" fill="#ffd44f" />
+          <g class="light-node yellow" data-color="yellow">
+            <circle cx="110" cy="254" r="45" fill="#ffd44f" />
             <circle cx="98" cy="242" r="20" fill="url(#gloss)" />
           </g>
-          <g>
-            <circle class="bulb green" data-color="green" cx="110" cy="398" r="45" fill="#50d66d" />
+          <g class="light-node green" data-color="green">
+            <circle cx="110" cy="398" r="45" fill="#50d66d" />
             <circle cx="98" cy="386" r="20" fill="url(#gloss)" />
           </g>
         </svg>
@@ -115,7 +124,7 @@
     </div>
 
     <script>
-      const bulbs = Array.from(document.querySelectorAll('.bulb'));
+      const bulbs = Array.from(document.querySelectorAll('.light-node'));
       const messageArea = document.getElementById('message');
       const actions = document.getElementById('actions');
       const saveBtn = document.getElementById('saveBtn');
