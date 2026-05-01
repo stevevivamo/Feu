@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feu de circulation partagé</title>
+    <style>
+      :root { font-family: "Segoe UI", Arial, sans-serif; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, #2fa7ee 0%, #84d1ff 100%);
+      }
+      .wrapper {
+        width: min(96vw, 1040px);
+        min-height: 100vh;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(10px, 2.2vh, 20px);
+      }
+      .layout {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(14px, 4vw, 48px);
+      }
+      .light-wrap {
+        width: min(36vw, 34vh, 280px);
+        min-width: 130px;
+        flex: 0 0 auto;
+      }
+      .traffic-svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.35));
+      }
+      .light-node {
+        cursor: pointer;
+        opacity: .34;
+        transform-origin: center;
+        transition: opacity .2s ease, transform .12s ease;
+      }
+      .light-node:hover { transform: scale(1.015); }
+      .light-node.on { opacity: 1; }
+
+      .panel {
+        width: min(52vw, 560px);
+        min-width: 250px;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(255,255,255,0.65);
+        border-radius: 14px;
+        backdrop-filter: blur(2px);
+        padding: clamp(10px, 1.8vw, 16px);
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: clamp(0.92rem, 1.3vw, 1.06rem);
+        font-weight: 600;
+        color: #1e293b;
+      }
+      textarea {
+        width: 100%;
+        min-height: clamp(80px, 16vh, 130px);
+        border: 1px solid #9caec8;
+        border-radius: 10px;
+        padding: clamp(8px, 1.2vw, 12px);
+        resize: vertical;
+        font-size: clamp(0.92rem, 1.4vw, 1.02rem);
+        line-height: 1.4;
+        box-sizing: border-box;
+      }
+      textarea[readonly] { background: #f4f7fb; color: #243245; }
+      .actions { margin-top: 10px; display: none; gap: 10px; }
+      .actions.show { display: flex; }
+      button {
+        border: 1px solid #9db1ce;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: clamp(.86rem, 1.2vw, .95rem);
+        cursor: pointer;
+      }
+
+      @media (max-width: 760px), (max-height: 620px) {
+        .layout {
+          flex-direction: column;
+          gap: 14px;
+        }
+        .light-wrap { width: min(42vw, 30vh, 220px); }
+        .panel { width: min(94vw, 620px); min-width: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="layout">
+        <div class="light-wrap" aria-label="Feu de circulation">
+          <svg class="traffic-svg" viewBox="0 0 190 560" role="img" aria-label="Feu rouge jaune vert">
+            <defs>
+              <linearGradient id="skyCase" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#3a414f"/>
+                <stop offset="100%" stop-color="#222833"/>
+              </linearGradient>
+              <radialGradient id="shine" cx="32%" cy="24%" r="65%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+
+            <rect x="72" y="500" width="46" height="58" rx="8" fill="#253041"/>
+            <rect x="87" y="548" width="16" height="12" fill="#1b2330"/>
+
+            <g transform="skewY(-12)">
+              <rect x="30" y="52" width="108" height="430" rx="14" fill="url(#skyCase)"/>
+              <rect x="35" y="58" width="98" height="418" rx="11" fill="#1b222d"/>
+
+              <g class="light-node red" data-color="red">
+                <ellipse cx="84" cy="124" rx="42" ry="36" fill="#111822"/>
+                <circle cx="87" cy="124" r="29" fill="#ff3b38"/>
+                <circle cx="80" cy="117" r="12" fill="url(#shine)"/>
+              </g>
+
+              <g class="light-node yellow" data-color="yellow">
+                <ellipse cx="84" cy="262" rx="42" ry="36" fill="#111822"/>
+                <circle cx="87" cy="262" r="29" fill="#ffc929"/>
+                <circle cx="80" cy="255" r="12" fill="url(#shine)"/>
+              </g>
+
+              <g class="light-node green" data-color="green">
+                <ellipse cx="84" cy="400" rx="42" ry="36" fill="#111822"/>
+                <circle cx="87" cy="400" r="29" fill="#3ece63"/>
+                <circle cx="80" cy="393" r="12" fill="url(#shine)"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <div class="panel">
+          <label for="message">Message partagé :</label>
+          <textarea id="message" readonly></textarea>
+          <div id="actions" class="actions">
+            <button id="saveBtn" type="button">Enregistrer</button>
+            <button id="cancelBtn" type="button">Annuler</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const bulbs = Array.from(document.querySelectorAll('.light-node'));
+      const messageArea = document.getElementById('message');
+      const actions = document.getElementById('actions');
+      const saveBtn = document.getElementById('saveBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+
+      let currentState = { color: 'red', message: '' };
+      let draftMessage = '';
+      let isEditing = false;
+
+      function render() {
+        bulbs.forEach((bulb) => bulb.classList.toggle('on', bulb.dataset.color === currentState.color));
+        messageArea.value = currentState.message || '';
+      }
+
+      function setEditMode(enabled) {
+        isEditing = enabled;
+        messageArea.readOnly = !enabled;
+        actions.classList.toggle('show', enabled);
+        if (enabled) {
+          draftMessage = currentState.message || '';
+          messageArea.focus();
+        }
+      }
+
+      async function loadState() {
+        if (isEditing) return;
+        const res = await fetch('state.aspx');
+        currentState = await res.json();
+        render();
+      }
+
+      async function saveState(nextState) {
+        const res = await fetch('state.aspx', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(nextState)
+        });
+        currentState = await res.json();
+        render();
+      }
+
+      bulbs.forEach((bulb) => {
+        bulb.addEventListener('click', async (event) => {
+          if (!event.shiftKey) return;
+          await saveState({ ...currentState, color: bulb.dataset.color });
+        });
+      });
+
+      messageArea.addEventListener('click', (event) => {
+        if (event.shiftKey) setEditMode(true);
+      });
+
+      saveBtn.addEventListener('click', async () => {
+        await saveState({ ...currentState, message: messageArea.value });
+        setEditMode(false);
+      });
+
+      cancelBtn.addEventListener('click', () => {
+        messageArea.value = draftMessage;
+        setEditMode(false);
+      });
+
+      loadState();
+      setEditMode(false);
+      setInterval(() => {
+        if (!isEditing) loadState();
+      }, 2000);
+    </script>
+  </body>
+</html>
