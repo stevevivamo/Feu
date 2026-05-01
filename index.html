@@ -60,6 +60,7 @@
 
       let currentState = { color: 'red', message: '' };
       let draftMessage = '';
+      let isEditing = false;
 
       function render() {
         bulbs.forEach((bulb) => bulb.classList.toggle('on', bulb.dataset.color === currentState.color));
@@ -68,6 +69,7 @@
       }
 
       function setEditMode(enabled) {
+        isEditing = enabled;
         messageArea.readOnly = !enabled;
         actions.classList.toggle('show', enabled);
         if (enabled) {
@@ -77,6 +79,7 @@
       }
 
       async function loadState() {
+        if (isEditing) return;
         const res = await fetch('./state.aspx');
         currentState = await res.json();
         render();
@@ -117,7 +120,11 @@
 
       loadState();
       setEditMode(false);
-      setInterval(loadState, 2000);
+      setInterval(() => {
+        if (!isEditing) {
+          loadState();
+        }
+      }, 2000);
     </script>
   </body>
 </html>
