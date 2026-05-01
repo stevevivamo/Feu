@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feu de circulation partagé</title>
+    <style>
+      :root { font-family: Arial, sans-serif; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f5f5f5; }
+      .wrapper { text-align: center; padding: 20px; }
+      .traffic-light { width: 130px; background: #222; border-radius: 16px; padding: 12px; display: grid; gap: 10px; margin: 0 auto 16px; }
+      .bulb { width: 90px; height: 90px; margin: 0 auto; border-radius: 50%; background: #555; opacity: 0.3; transition: opacity .2s; cursor: pointer; border: 2px solid transparent; }
+      .bulb:hover { border-color: #bbb; }
+      .bulb.on { opacity: 1; }
+      .red.on { background: #e53935; }
+      .yellow.on { background: #fbc02d; }
+      .green.on { background: #43a047; }
+      .status { font-weight: bold; margin-bottom: 12px; }
+      .message-box { width: 340px; max-width: 92vw; margin: 0 auto; }
+      textarea { width: 100%; min-height: 70px; border: 1px solid #ccc; border-radius: 8px; padding: 8px 10px; resize: vertical; }
+      textarea[readonly] { background: #efefef; color: #333; }
+      .actions { margin-top: 8px; display: none; gap: 8px; justify-content: center; }
+      .actions.show { display: flex; }
+      button { padding: 6px 12px; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; }
+      .hint { margin-top: 12px; color: #666; font-size: .9rem; }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="traffic-light" aria-label="Feu de circulation">
+        <div class="bulb red" data-color="red" title="Shift+clic pour rouge"></div>
+        <div class="bulb yellow" data-color="yellow" title="Shift+clic pour jaune"></div>
+        <div class="bulb green" data-color="green" title="Shift+clic pour vert"></div>
+      </div>
+      <div id="status" class="status">État : chargement...</div>
+
+      <div class="message-box">
+        <label for="message">Message partagé :</label>
+        <textarea id="message" readonly></textarea>
+        <div id="actions" class="actions">
+          <button id="saveBtn" type="button">Enregistrer</button>
+          <button id="cancelBtn" type="button">Annuler</button>
+        </div>
+      </div>
+
+      <div class="hint">
+        Maintiens <strong>Shift</strong> + clic sur une couleur pour choisir l'état.<br/>
+        Maintiens <strong>Shift</strong> + clic dans le message pour passer en mode modification.
+      </div>
+    </div>
+
+    <script>
+      const labels = { red: 'rouge', green: 'vert', yellow: 'jaune' };
+      const bulbs = Array.from(document.querySelectorAll('.bulb'));
+      const status = document.getElementById('status');
+      const messageArea = document.getElementById('message');
+      const actions = document.getElementById('actions');
+      const saveBtn = document.getElementById('saveBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+
+      let currentState = { color: 'red', message: '' };
+      let draftMessage = '';
+
+      function render() {
+        bulbs.forEach((bulb) => bulb.classList.toggle('on', bulb.dataset.color === currentState.color));
+        status.textContent = `État : ${labels[currentState.color] || currentState.color}`;
+        messageArea.value = currentState.message || '';
+      }
+
+      function setEditMode(enabled) {
+        messageArea.readOnly = !enabled;
+        actions.classList.toggle('show', enabled);
+        if (enabled) {
+          draftMessage = currentState.message || '';
+          messageArea.focus();
+        }
+      }
+
+      async function loadState() {
+        const res = await fetch('/api/state.ashx');
+        currentState = await res.json();
+        render();
+      }
+
+      async function saveState(nextState) {
+        const res = await fetch('/api/state.ashx', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(nextState)
+        });
+        currentState = await res.json();
+        render();
+      }
+
+      bulbs.forEach((bulb) => {
+        bulb.addEventListener('click', async (event) => {
+          if (!event.shiftKey) return;
+          await saveState({ ...currentState, color: bulb.dataset.color });
+        });
+      });
+
+      messageArea.addEventListener('click', (event) => {
+        if (event.shiftKey) {
+          setEditMode(true);
+        }
+      });
+
+      saveBtn.addEventListener('click', async () => {
+        await saveState({ ...currentState, message: messageArea.value });
+        setEditMode(false);
+      });
+
+      cancelBtn.addEventListener('click', () => {
+        messageArea.value = draftMessage;
+        setEditMode(false);
+      });
+
+      loadState();
+      setEditMode(false);
+      setInterval(loadState, 2000);
+    </script>
+  </body>
+</html>
