@@ -5,34 +5,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Feu de circulation partagé</title>
     <style>
-      :root { font-family: Arial, sans-serif; }
-      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f5f5f5; }
-      .wrapper { text-align: center; padding: 20px; }
-      .traffic-light { width: 130px; background: #222; border-radius: 16px; padding: 12px; display: grid; gap: 10px; margin: 0 auto 16px; }
-      .bulb { width: 90px; height: 90px; margin: 0 auto; border-radius: 50%; background: #555; opacity: 0.3; transition: opacity .2s; cursor: pointer; border: 2px solid transparent; }
-      .bulb:hover { border-color: #bbb; }
+      :root { font-family: "Segoe UI", Arial, sans-serif; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at top, #f8fafc 0%, #e9edf3 55%, #d9dee8 100%);
+      }
+      .wrapper {
+        width: min(95vw, 760px);
+        text-align: center;
+        padding: clamp(10px, 2.5vw, 22px);
+      }
+
+      .light-wrap {
+        width: clamp(170px, 52vw, 360px);
+        margin: 0 auto clamp(14px, 2.8vw, 20px);
+      }
+      .traffic-svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.22));
+      }
+      .bulb {
+        cursor: pointer;
+        opacity: .32;
+        transition: opacity .2s ease, transform .16s ease;
+      }
+      .bulb:hover { transform: scale(1.03); }
       .bulb.on { opacity: 1; }
-      .red.on { background: #e53935; }
-      .yellow.on { background: #fbc02d; }
-      .green.on { background: #43a047; }
-      .status { font-weight: bold; margin-bottom: 12px; }
-      .message-box { width: 340px; max-width: 92vw; margin: 0 auto; }
-      textarea { width: 100%; min-height: 70px; border: 1px solid #ccc; border-radius: 8px; padding: 8px 10px; resize: vertical; }
-      textarea[readonly] { background: #efefef; color: #333; }
-      .actions { margin-top: 8px; display: none; gap: 8px; justify-content: center; }
+
+      .message-box {
+        width: min(92vw, 620px);
+        margin: 0 auto;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: clamp(0.9rem, 1.7vw, 1.1rem);
+        font-weight: 600;
+        color: #1f2937;
+      }
+      textarea {
+        width: 100%;
+        min-height: clamp(64px, 12vw, 90px);
+        border: 1px solid #b9c2d0;
+        border-radius: 10px;
+        padding: clamp(8px, 1.6vw, 12px);
+        resize: vertical;
+        font-size: clamp(0.92rem, 1.8vw, 1.05rem);
+        line-height: 1.35;
+      }
+      textarea[readonly] { background: #f2f4f8; color: #2b3240; }
+
+      .actions { margin-top: 10px; display: none; gap: 10px; justify-content: center; }
       .actions.show { display: flex; }
-      button { padding: 6px 12px; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; }
-      .hint { margin-top: 12px; color: #666; font-size: .9rem; }
+      button {
+        border: 1px solid #c4ccda;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: clamp(.86rem, 1.5vw, .95rem);
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
     <div class="wrapper">
-      <div class="traffic-light" aria-label="Feu de circulation">
-        <div class="bulb red" data-color="red" title="Shift+clic pour rouge"></div>
-        <div class="bulb yellow" data-color="yellow" title="Shift+clic pour jaune"></div>
-        <div class="bulb green" data-color="green" title="Shift+clic pour vert"></div>
+      <div class="light-wrap" aria-label="Feu de circulation">
+        <svg class="traffic-svg" viewBox="0 0 220 520" role="img" aria-label="Feu rouge jaune vert">
+          <defs>
+            <linearGradient id="caseGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2f3540"/>
+              <stop offset="100%" stop-color="#1a1f27"/>
+            </linearGradient>
+            <radialGradient id="gloss" cx="30%" cy="20%" r="60%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+
+          <rect x="35" y="18" width="150" height="470" rx="28" fill="url(#caseGrad)"/>
+          <rect x="43" y="26" width="134" height="454" rx="22" fill="#20252e"/>
+
+          <g>
+            <circle class="bulb red" data-color="red" cx="110" cy="110" r="45" fill="#ff4d4d" />
+            <circle cx="98" cy="98" r="20" fill="url(#gloss)" />
+          </g>
+          <g>
+            <circle class="bulb yellow" data-color="yellow" cx="110" cy="254" r="45" fill="#ffd44f" />
+            <circle cx="98" cy="242" r="20" fill="url(#gloss)" />
+          </g>
+          <g>
+            <circle class="bulb green" data-color="green" cx="110" cy="398" r="45" fill="#50d66d" />
+            <circle cx="98" cy="386" r="20" fill="url(#gloss)" />
+          </g>
+        </svg>
       </div>
-      <div id="status" class="status">État : chargement...</div>
 
       <div class="message-box">
         <label for="message">Message partagé :</label>
@@ -42,17 +112,10 @@
           <button id="cancelBtn" type="button">Annuler</button>
         </div>
       </div>
-
-      <div class="hint">
-        Maintiens <strong>Shift</strong> + clic sur une couleur pour choisir l'état.<br/>
-        Maintiens <strong>Shift</strong> + clic dans le message pour passer en mode modification.
-      </div>
     </div>
 
     <script>
-      const labels = { red: 'rouge', green: 'vert', yellow: 'jaune' };
       const bulbs = Array.from(document.querySelectorAll('.bulb'));
-      const status = document.getElementById('status');
       const messageArea = document.getElementById('message');
       const actions = document.getElementById('actions');
       const saveBtn = document.getElementById('saveBtn');
@@ -64,7 +127,6 @@
 
       function render() {
         bulbs.forEach((bulb) => bulb.classList.toggle('on', bulb.dataset.color === currentState.color));
-        status.textContent = `État : ${labels[currentState.color] || currentState.color}`;
         messageArea.value = currentState.message || '';
       }
 
@@ -80,13 +142,13 @@
 
       async function loadState() {
         if (isEditing) return;
-        const res = await fetch('./state.aspx');
+        const res = await fetch('state.aspx');
         currentState = await res.json();
         render();
       }
 
       async function saveState(nextState) {
-        const res = await fetch('./state.aspx', {
+        const res = await fetch('state.aspx', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(nextState)
@@ -103,9 +165,7 @@
       });
 
       messageArea.addEventListener('click', (event) => {
-        if (event.shiftKey) {
-          setEditMode(true);
-        }
+        if (event.shiftKey) setEditMode(true);
       });
 
       saveBtn.addEventListener('click', async () => {
@@ -121,9 +181,7 @@
       loadState();
       setEditMode(false);
       setInterval(() => {
-        if (!isEditing) {
-          loadState();
-        }
+        if (!isEditing) loadState();
       }, 2000);
     </script>
   </body>
