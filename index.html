@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Indicateur partagé</title>
+    <style>
+      :root { font-family: Arial, sans-serif; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #f7f7f7;
+        color: #222;
+      }
+      .app {
+        width: min(92vw, 520px);
+        text-align: center;
+      }
+      .indicator {
+        width: clamp(120px, 24vw, 180px);
+        height: clamp(120px, 24vw, 180px);
+        margin: 0 auto 18px;
+        border-radius: 50%;
+        background: #999;
+        box-shadow: inset 0 -10px 20px rgba(0,0,0,.18), 0 6px 14px rgba(0,0,0,.12);
+        cursor: pointer;
+      }
+      .indicator.red { background: #e53935; }
+      .indicator.green { background: #43a047; }
+      .indicator.yellow { background: #fbc02d; }
+
+      .message {
+        font-size: clamp(1rem, 2.1vw, 1.1rem);
+        line-height: 1.45;
+        padding: 6px 0;
+        border-bottom: 1px solid #ddd;
+        min-height: 28px;
+      }
+
+      .edit-actions { margin-top: 10px; display: none; gap: 8px; justify-content: center; }
+      .edit-actions.show { display: flex; }
+      button { border: 1px solid #ccc; background: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+      input[type='text'] {
+        width: 100%;
+        border: none;
+        border-bottom: 1px solid #888;
+        background: transparent;
+        outline: none;
+        padding: 6px 2px;
+        font-size: clamp(1rem, 2.1vw, 1.1rem);
+      }
+      .hint { font-size: .9rem; color: #666; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div id="indicator" class="indicator" aria-label="Indicateur d'état"></div>
+
+      <div id="messageLabel" class="message"></div>
+      <input id="messageInput" type="text" style="display:none" />
+
+      <div id="editActions" class="edit-actions">
+        <button id="saveBtn" type="button">Enregistrer</button>
+        <button id="cancelBtn" type="button">Annuler</button>
+      </div>
+    </div>
+
+    <script>
+      const states = ['red', 'green', 'yellow'];
+      const indicator = document.getElementById('indicator');
+      const messageLabel = document.getElementById('messageLabel');
+      const messageInput = document.getElementById('messageInput');
+      const editActions = document.getElementById('editActions');
+      const saveBtn = document.getElementById('saveBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+
+      let currentState = { color: 'red', message: '' };
+      let isEditing = false;
+
+      function render() {
+        indicator.classList.remove('red', 'green', 'yellow');
+        indicator.classList.add(currentState.color);
+        messageLabel.textContent = currentState.message || '—';
+      }
+
+      function setEditMode(enabled) {
+        isEditing = enabled;
+        messageLabel.style.display = enabled ? 'none' : 'block';
+        messageInput.style.display = enabled ? 'block' : 'none';
+        editActions.classList.toggle('show', enabled);
+        if (enabled) {
+          messageInput.value = currentState.message || '';
+          messageInput.focus();
+        }
+      }
+
+      async function loadState() {
+        if (isEditing) return;
+        const res = await fetch('state.aspx');
+        currentState = await res.json();
+        render();
+      }
+
+      async function saveState(nextState) {
+        const res = await fetch('state.aspx', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(nextState)
+        });
+        currentState = await res.json();
+        render();
+      }
+
+      indicator.addEventListener('click', async (event) => {
+        if (!event.shiftKey) return;
+        const index = states.indexOf(currentState.color);
+        const nextColor = states[(index + 1) % states.length];
+        await saveState({ ...currentState, color: nextColor });
+      });
+
+      messageLabel.addEventListener('click', (event) => {
+        if (event.shiftKey) setEditMode(true);
+      });
+
+      saveBtn.addEventListener('click', async () => {
+        await saveState({ ...currentState, message: messageInput.value });
+        setEditMode(false);
+      });
+
+      cancelBtn.addEventListener('click', () => setEditMode(false));
+
+      loadState();
+      setEditMode(false);
+      setInterval(() => { if (!isEditing) loadState(); }, 2000);
+    </script>
+  </body>
+</html>
